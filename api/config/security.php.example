@@ -1,0 +1,32 @@
+<?php
+declare(strict_types=1);
+
+// Copy to security.php on the server. Never commit production secrets.
+const MWH_LOCAL_ENCRYPTION_KEY = 'CHANGE_THIS_TO_A_LONG_RANDOM_SECRET_32_CHARS_MINIMUM';
+
+function encryptLocalSensitive(string $value): string
+{
+    $key = hash('sha256', MWH_LOCAL_ENCRYPTION_KEY, true);
+    $iv = random_bytes(16);
+    $ciphertext = openssl_encrypt($value, 'AES-256-CBC', $key, OPENSSL_RAW_DATA, $iv);
+    if ($ciphertext === false) {
+        throw new RuntimeException('Unable to encrypt sensitive data');
+    }
+    return base64_encode($iv . $ciphertext);
+}
+
+function decryptLocalSensitive(string $value): string
+{
+    $raw = base64_decode($value, true);
+    if ($raw === false || strlen($raw) < 17) {
+        throw new RuntimeException('Invalid encrypted data');
+    }
+    $key = hash('sha256', MWH_LOCAL_ENCRYPTION_KEY, true);
+    $iv = substr($raw, 0, 16);
+    $ciphertext = substr($raw, 16);
+    $plaintext = openssl_decrypt($ciphertext, 'AES-256-CBC', $key, OPENSSL_RAW_DATA, $iv);
+    if ($plaintext === false) {
+        throw new RuntimeException('Unable to decrypt sensitive data');
+    }
+    return $plaintext;
+}
