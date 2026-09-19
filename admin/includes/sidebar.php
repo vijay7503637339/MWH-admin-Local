@@ -7,10 +7,6 @@
     <a class="<?=$currentPage==='contractors.php'?'active':''?>" href="contractors.php"><i class="bi bi-briefcase-fill"></i><span>Contractors</span></a>
     <a class="<?=$currentPage==='staff.php'?'active':''?>" href="staff.php"><i class="bi bi-person-badge-fill"></i><span>Staff / Chefs</span></a>
     <a class="<?=$currentPage==='requirements.php'?'active':''?>" href="requirements.php"><i class="bi bi-clipboard-plus-fill"></i><span>Requirements</span></a>
-    <a class="<?=$currentPage==='applications.php'?'active':''?>" href="applications.php"><i class="bi bi-file-earmark-check-fill"></i><span>Applications</span></a>
-    <a class="<?=$currentPage==='assignments.php'?'active':''?>" href="assignments.php"><i class="bi bi-calendar2-check-fill"></i><span>Assignments</span></a>
-    <a class="<?=$currentPage==='attendance.php'?'active':''?>" href="attendance.php"><i class="bi bi-clock-history"></i><span>Attendance</span></a>
-    <a class="<?=$currentPage==='payments.php'?'active':''?>" href="payments.php"><i class="bi bi-wallet2"></i><span>Payments</span></a>
     <div class="nav-label">Configuration</div>
     <a class="<?=$currentPage==='categories.php'?'active':''?>" href="categories.php"><i class="bi bi-tags-fill"></i><span>Categories</span></a>
     <a class="<?=$currentPage==='job_roles.php'?'active':''?>" href="job_roles.php"><i class="bi bi-diagram-3-fill"></i><span>Job Roles</span></a>
