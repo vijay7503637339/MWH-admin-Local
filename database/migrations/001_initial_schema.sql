@@ -1,0 +1,3 @@
+-- MWH Local initial schema.
+-- Canonical source: database/schema.sql
+-- Use schema.sql for the first production install.
