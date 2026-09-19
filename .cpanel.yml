@@ -1,0 +1,5 @@
+---
+deployment:
+  tasks:
+    - /bin/mkdir -p $HOME/public_html/MWH-admin-Local
+    - /bin/cp -R . $HOME/public_html/MWH-admin-Local/
