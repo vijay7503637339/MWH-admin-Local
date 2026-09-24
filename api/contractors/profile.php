@@ -18,7 +18,7 @@ try {
             p.business_name,p.business_type,p.whatsapp_mobile,p.full_address,p.city,p.state,p.postcode,p.gstin
          FROM local_users u
          LEFT JOIN local_contractor_profiles p ON p.user_id=u.id
-         WHERE u.id=? AND u.role=''contractor'' AND u.deleted_at IS NULL
+         WHERE u.id=? AND u.role="contractor" AND u.deleted_at IS NULL
          LIMIT 1'
     );
     $stmt->execute([(int)$user['id']]);
