@@ -48,6 +48,35 @@ if(($_SERVER['REQUEST_METHOD']??'')==='POST'){
                 $stmt->execute([$newStatus,$admin['id'],$paymentId]);
 
                 if($newStatus==='paid'){
+                    // Contractor payment is not considered fully settled until the
+                    // complete assignment amount has been approved. Once fully
+                    // covered, create the staff payout ledger entry.
+                    $coveredStmt=$pdo->prepare(
+                        'SELECT COALESCE(SUM(amount),0) FROM local_payments
+                         WHERE assignment_id=? AND status="paid"'
+                    );
+                    $coveredStmt->execute([(int)$payment['assignment_id']]);
+                    $covered=(float)$coveredStmt->fetchColumn();
+
+                    $assignmentStmt=$pdo->prepare(
+                        'SELECT payout_amount,staff_user_id FROM local_assignments WHERE id=? LIMIT 1'
+                    );
+                    $assignmentStmt->execute([(int)$payment['assignment_id']]);
+                    $assignment=$assignmentStmt->fetch(PDO::FETCH_ASSOC);
+                    if($assignment && $covered >= (float)$assignment['payout_amount']){
+                        $payoutInsert=$pdo->prepare(
+                            'INSERT INTO local_staff_payouts
+                             (assignment_id,staff_user_id,amount,status)
+                             VALUES(?,?,?,"pending")
+                             ON DUPLICATE KEY UPDATE amount=VALUES(amount),updated_at=UTC_TIMESTAMP()'
+                        );
+                        $payoutInsert->execute([
+                            (int)$payment['assignment_id'],
+                            (int)$assignment['staff_user_id'],
+                            (float)$assignment['payout_amount']
+                        ]);
+                    }
+
                     $title='Payment approved';
                     $message='Payment of ₹'.number_format((float)$payment['amount'],2).' for "'.(string)$payment['title'].'" has been approved.';
                     $type='payment_approved';
@@ -62,6 +91,16 @@ if(($_SERVER['REQUEST_METHOD']??'')==='POST'){
                 $notice=$pdo->prepare('INSERT INTO local_notifications(user_id,admin_user_id,type,title,message,data_json) VALUES(?,?,?,?,?,?)');
                 $notice->execute([
                     (int)$payment['staff_user_id'],$admin['id'],$type,$title,$message,
+                    json_encode(['payment_id'=>$paymentId,'assignment_id'=>(int)$payment['assignment_id'],'status'=>$statusText],JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES)
+                ]);
+
+                $contractorTitle = $newStatus==='paid' ? 'Payment approved' : 'Payment rejected';
+                $contractorMessage = $newStatus==='paid'
+                    ? 'Your payment of ₹'.number_format((float)$payment['amount'],2).' for "'.(string)$payment['title'].'" has been approved by admin.'
+                    : 'Your payment of ₹'.number_format((float)$payment['amount'],2).' for "'.(string)$payment['title'].'" was rejected by admin.';
+                $contractorNotice=$pdo->prepare('INSERT INTO local_notifications(user_id,admin_user_id,type,title,message,data_json) VALUES(?,?,?,?,?,?)');
+                $contractorNotice->execute([
+                    (int)$payment['contractor_user_id'],$admin['id'],$type,$contractorTitle,$contractorMessage,
                     json_encode(['payment_id'=>$paymentId,'assignment_id'=>(int)$payment['assignment_id'],'status'=>$statusText],JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES)
                 ]);
 
