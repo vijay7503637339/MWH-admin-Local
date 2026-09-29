@@ -22,7 +22,7 @@ try {
                     att.check_in_at,att.check_out_at,
                     COALESCE((SELECT SUM(p.amount) FROM local_payments p WHERE p.assignment_id=a.id AND p.status="paid"),0) AS paid_amount,
                     COALESCE((SELECT SUM(p.amount) FROM local_payments p WHERE p.assignment_id=a.id AND p.status="pending"),0) AS pending_payment_amount,
-                    COALESCE(sp.amount,a.staff_payout_amount,(a.payout_amount * ((100.0-' . LOCAL_STAFF_COMMISSION_PERCENT . ')/100.0))) AS staff_payout_amount,';
+                    COALESCE(sp.amount,a.staff_payout_amount,(a.payout_amount * ((100.0-' . LOCAL_STAFF_COMMISSION_PERCENT . ')/100.0))) AS staff_payout_amount,
                     COALESCE(sp.status,CASE WHEN a.status="completed" THEN "pending" ELSE "not_ready" END) AS staff_payout_status,
                     sp.paid_at AS staff_payout_paid_at
              FROM local_assignments a
