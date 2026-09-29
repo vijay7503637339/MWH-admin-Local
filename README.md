@@ -43,9 +43,10 @@ mysql -u YOUR_LOCAL_DB_USER -p YOUR_LOCAL_DB_NAME < database/migrations/015_paym
 mysql -u YOUR_LOCAL_DB_USER -p YOUR_LOCAL_DB_NAME < database/migrations/016_staff_payouts.sql
 mysql -u YOUR_LOCAL_DB_USER -p YOUR_LOCAL_DB_NAME < database/migrations/017_duty_attendance.sql
 mysql -u YOUR_LOCAL_DB_USER -p YOUR_LOCAL_DB_NAME < database/migrations/018_job_role_pricing.sql
+mysql -u YOUR_LOCAL_DB_USER -p YOUR_LOCAL_DB_NAME < database/migrations/019_assignment_payout_split.sql
 ```
 
-These add company payment settings (UPI, bank details and QR storage), the staff payout ledger, the duty arrival attendance timestamp, and job-role pricing defaults.
+These add company payment settings (UPI, bank details and QR storage), the staff payout ledger, the duty arrival attendance timestamp, job-role pricing defaults, and the split between gross contractor assignment amount and net staff payout.
 
 ### Finance workflow
 
