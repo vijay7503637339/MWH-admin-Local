@@ -143,7 +143,7 @@ require __DIR__.'/includes/sidebar.php';
   <?php if($error):?><div class="alert alert-danger mt-3"><?=pe($error)?></div><?php endif;?>
 
   <section class="panel mt-3">
-    <div class="panel-head"><div><h2>Company payment details</h2><p class="muted">Shown to contractors when they pay Maan World for a completed duty.</p></div></div>
+    <div class="panel-head"><div><h2>Company payment details</h2><p class="muted">Shown to contractors when they pay Maan World for a selected duty.</p></div></div>
     <form method="post" enctype="multipart/form-data" class="p-3">
       <input type="hidden" name="csrf" value="<?=pe($csrf)?>"><input type="hidden" name="action" value="settings">
       <div class="row g-3">
