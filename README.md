@@ -42,9 +42,10 @@ After pulling the repository, apply the current migrations to the dedicated Loca
 mysql -u YOUR_LOCAL_DB_USER -p YOUR_LOCAL_DB_NAME < database/migrations/015_payment_settings.sql
 mysql -u YOUR_LOCAL_DB_USER -p YOUR_LOCAL_DB_NAME < database/migrations/016_staff_payouts.sql
 mysql -u YOUR_LOCAL_DB_USER -p YOUR_LOCAL_DB_NAME < database/migrations/017_duty_attendance.sql
+mysql -u YOUR_LOCAL_DB_USER -p YOUR_LOCAL_DB_NAME < database/migrations/018_job_role_pricing.sql
 ```
 
-These add company payment settings (UPI, bank details and QR storage), the staff payout ledger, and the duty arrival attendance timestamp.
+These add company payment settings (UPI, bank details and QR storage), the staff payout ledger, the duty arrival attendance timestamp, and job-role pricing defaults.
 
 ### Finance workflow
 
