@@ -38,10 +38,9 @@ try {
     $stmt=$pdo->prepare($sql);$stmt->execute($params);
     $items=$stmt->fetchAll(PDO::FETCH_ASSOC);
     foreach($items as &$item){
-        $grossPerStaff=(float)($item['role_master_amount']??0);
-        if($grossPerStaff<=0){
-            $grossPerStaff=(int)($item['openings_count']??0)>0 ? (float)$item['payout_amount']/(int)$item['openings_count'] : (float)$item['payout_amount'];
-        }
+        $grossPerStaff=(int)($item['openings_count']??0)>0
+            ? (float)$item['payout_amount']/(int)$item['openings_count']
+            : (float)$item['payout_amount'];
         $item['staff_payout_amount']=localStaffNetAmount($grossPerStaff);
         $item['staff_payout_period']=(string)($item['role_amount_period']??$item['payout_period']??'per_day');
     }
