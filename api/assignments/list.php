@@ -10,9 +10,11 @@ try {
         $stmt = $pdo->prepare(
             'SELECT a.id assignment_id,a.requirement_id,a.contractor_user_id,a.status,a.assigned_at,a.start_at,a.end_at,a.payout_amount,a.notes,
                     r.title,r.work_location,r.work_address,r.shift_date,r.shift_start,r.shift_end,
-                    u.name AS contractor_name,
+                    u.name AS contractor_name,u.mobile AS contractor_mobile,
                     la.status AS application_status,
-                    att.check_in_at,att.check_out_at
+                    att.check_in_at,att.check_out_at,
+                    COALESCE((SELECT SUM(p.amount) FROM local_payments p WHERE p.assignment_id=a.id AND p.status="paid"),0) AS paid_amount,
+                    COALESCE((SELECT SUM(p.amount) FROM local_payments p WHERE p.assignment_id=a.id AND p.status="pending"),0) AS pending_payment_amount
              FROM local_assignments a
              INNER JOIN local_requirements r ON r.id=a.requirement_id
              INNER JOIN local_users u ON u.id=a.contractor_user_id
@@ -32,7 +34,9 @@ try {
             'SELECT a.id assignment_id,a.requirement_id,a.staff_user_id,a.status,a.assigned_at,a.start_at,a.end_at,a.payout_amount,a.notes,
                     r.title,r.work_location,r.shift_date,r.shift_start,r.shift_end,
                     s.name AS staff_name,s.mobile AS staff_mobile,
-                    att.check_in_at,att.check_out_at
+                    att.check_in_at,att.check_out_at,
+                    COALESCE((SELECT SUM(p.amount) FROM local_payments p WHERE p.assignment_id=a.id AND p.status="paid"),0) AS paid_amount,
+                    COALESCE((SELECT SUM(p.amount) FROM local_payments p WHERE p.assignment_id=a.id AND p.status="pending"),0) AS pending_payment_amount
              FROM local_assignments a
              INNER JOIN local_requirements r ON r.id=a.requirement_id
              INNER JOIN local_users s ON s.id=a.staff_user_id
