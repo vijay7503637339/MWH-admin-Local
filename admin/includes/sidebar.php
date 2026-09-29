@@ -7,6 +7,7 @@
     <a class="<?=$currentPage==='contractors.php'?'active':''?>" href="contractors.php"><i class="bi bi-briefcase-fill"></i><span>Contractors</span></a>
     <a class="<?=$currentPage==='staff.php'?'active':''?>" href="staff.php"><i class="bi bi-person-badge-fill"></i><span>Staff / Chefs</span></a>
     <a class="<?=$currentPage==='requirements.php'?'active':''?>" href="requirements.php"><i class="bi bi-clipboard-plus-fill"></i><span>Requirements</span></a>
+    <a class="<?=$currentPage==='duty.php'?'active':''?>" href="duty.php"><i class="bi bi-calendar2-check-fill"></i><span>Duty</span></a>
     <a class="<?=$currentPage==='payments.php'?'active':''?>" href="payments.php"><i class="bi bi-credit-card-fill"></i><span>Payments</span></a>
     <a class="<?=$currentPage==='payouts.php'?'active':''?>" href="payouts.php"><i class="bi bi-wallet2"></i><span>Staff Payouts</span></a>
     <div class="nav-label">Configuration</div>
