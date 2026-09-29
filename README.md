@@ -41,9 +41,10 @@ After pulling the repository, apply the current migrations to the dedicated Loca
 ```bash
 mysql -u YOUR_LOCAL_DB_USER -p YOUR_LOCAL_DB_NAME < database/migrations/015_payment_settings.sql
 mysql -u YOUR_LOCAL_DB_USER -p YOUR_LOCAL_DB_NAME < database/migrations/016_staff_payouts.sql
+mysql -u YOUR_LOCAL_DB_USER -p YOUR_LOCAL_DB_NAME < database/migrations/017_duty_attendance.sql
 ```
 
-These add company payment settings (UPI, bank details and QR storage) and the staff payout ledger.
+These add company payment settings (UPI, bank details and QR storage), the staff payout ledger, and the duty arrival attendance timestamp.
 
 ### Finance workflow
 
@@ -57,6 +58,7 @@ When a staff member completes an active duty, a pending staff payout record is c
 
 - `admin/payments.php` — company payment details and contractor payment approval
 - `admin/payouts.php` — staff payout processing
+- `admin/duty.php` — staff duty attendance (arrival, start and completion)
 - `admin/requirements.php` — contractor requirements
 - `admin/contractors.php` — contractor accounts
 - `admin/staff.php` — staff accounts
