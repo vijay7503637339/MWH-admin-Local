@@ -14,7 +14,7 @@ try {
         }
         $statusWhere = $status === '' ? 'a.status<>"cancelled"' : 'a.status=?';
         $stmt = $pdo->prepare(
-            'SELECT a.id assignment_id,a.requirement_id,a.contractor_user_id,a.status,a.assigned_at,a.start_at,a.end_at,a.payout_amount,a.notes,
+            'SELECT a.id assignment_id,a.requirement_id,a.contractor_user_id,a.status,a.assigned_at,a.arrival_at,a.start_at,a.end_at,a.payout_amount,a.notes,
                     r.title,r.work_location,r.work_address,r.shift_date,r.shift_start,r.shift_end,
                     u.name AS contractor_name,u.mobile AS contractor_mobile,
                     la.status AS application_status,
