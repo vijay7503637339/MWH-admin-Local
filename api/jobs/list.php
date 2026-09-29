@@ -9,14 +9,14 @@ try {
     $q=trim((string)($_GET['q']??''));
     $city=trim((string)($_GET['city']??''));
     $minPay=(float)($_GET['min_pay']??0);
-    $where=['lr.status="open"','lr.deleted_at IS NULL'];
+    $where=['lr.status="open"','lr.deleted_at IS NULL','lr.shift_date>=UTC_DATE()'];
     $params=[];
     $term='%'.$q.'%';
     if($q!==''){ $where[]='(lr.title LIKE ? OR lr.description LIKE ? OR lr.work_location LIKE ? OR jr.name LIKE ? OR c.name LIKE ?)'; array_push($params,$term,$term,$term,$term,$term);}
     if($city!==''){ $where[]='lr.work_location LIKE ?'; $params[]='%'.$city.'%';}
     if($minPay>0){$where[]='lr.payout_amount>=?';$params[]=$minPay;}
 
-    $sql='SELECT lr.id,lr.title,lr.description,lr.openings_count,lr.work_location,lr.work_address,lr.shift_date,lr.shift_start,lr.shift_end,lr.minimum_experience,lr.payout_amount,lr.payout_period,lr.status,u.name AS contractor_name,c.name AS category_name,jr.name AS job_role_name,
+    $sql='SELECT lr.id,lr.title,lr.description,lr.notes,lr.openings_count,lr.work_location,lr.work_address,lr.shift_date,lr.shift_start,lr.shift_end,lr.minimum_experience,lr.payout_amount,lr.payout_period,lr.status,u.name AS contractor_name,c.name AS category_name,jr.name AS job_role_name,
           COALESCE(la.status,"") AS application_status,COALESCE(a.status,"") AS assignment_status
           FROM local_requirements lr
           INNER JOIN local_users u ON u.id=lr.contractor_user_id AND u.role="contractor" AND u.deleted_at IS NULL
