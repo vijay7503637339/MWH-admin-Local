@@ -4,6 +4,7 @@ declare(strict_types=1);
 require_once __DIR__ . '/includes/auth.php';
 requireAdmin();
 require_once __DIR__ . '/../api/config/database.php';
+require_once __DIR__ . '/../api/config/pricing.php';
 
 $admin=currentAdmin();
 if(!in_array((string)$admin['role'],['super_admin','finance_admin'],true)){
@@ -59,7 +60,7 @@ if(($_SERVER['REQUEST_METHOD']??'')==='POST'){
                     $covered=(float)$coveredStmt->fetchColumn();
 
                     $assignmentStmt=$pdo->prepare(
-                        'SELECT payout_amount,staff_user_id FROM local_assignments WHERE id=? LIMIT 1'
+                        'SELECT payout_amount,staff_payout_amount,staff_user_id FROM local_assignments WHERE id=? LIMIT 1'
                     );
                     $assignmentStmt->execute([(int)$payment['assignment_id']]);
                     $assignment=$assignmentStmt->fetch(PDO::FETCH_ASSOC);
@@ -73,7 +74,7 @@ if(($_SERVER['REQUEST_METHOD']??'')==='POST'){
                         $payoutInsert->execute([
                             (int)$payment['assignment_id'],
                             (int)$assignment['staff_user_id'],
-                            (float)$assignment['payout_amount']
+                            (float)($assignment['staff_payout_amount'] ?? localStaffNetAmount((float)$assignment['payout_amount']))
                         ]);
                     }
 
