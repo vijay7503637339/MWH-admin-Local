@@ -12,7 +12,7 @@ try {
     $where=[
         'lr.status IN ("open","active")',
         'lr.deleted_at IS NULL',
-        'lr.shift_date>=DATE(DATE_ADD(UTC_TIMESTAMP(), INTERVAL 5 HOUR + 30 MINUTE))',
+        'lr.shift_date>=DATE(DATE_ADD(UTC_TIMESTAMP(), INTERVAL 330 MINUTE))',
         '(SELECT COUNT(*) FROM local_applications sa WHERE sa.requirement_id=lr.id AND sa.status="selected") < lr.openings_count'
     ];
     $params=[];
