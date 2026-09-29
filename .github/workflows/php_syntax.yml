@@ -19,4 +19,4 @@ jobs:
         run: |
           set -e
           find . -type f -name '*.php' -print0 | xargs -0 -n1 php -l
-          echo "PHP lint complete"
+          echo "PHP lint complete - final"\n# final-validation-pass\n
