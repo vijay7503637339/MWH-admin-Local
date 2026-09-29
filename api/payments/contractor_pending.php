@@ -9,5 +9,6 @@ try{
   $items=$stmt->fetchAll(PDO::FETCH_ASSOC);
   $settings=[];
   try{$q=$pdo->query("SELECT company_name,upi_id,account_number,account_name,ifsc_code,qr_code_path,updated_at FROM local_payment_settings WHERE is_active=1 ORDER BY id DESC LIMIT 1");$settings=$q->fetch(PDO::FETCH_ASSOC)?:[];}catch(Throwable $e){}
+  $settings['qr_code_url']='payments/qr.php';
   localJson(['success'=>true,'data'=>['settings'=>$settings,'items'=>$items]]);
 }catch(Throwable $e){error_log('MWH Local contractor pending payment: '.$e->getMessage());localJson(['success'=>false,'message'=>'Unable to load payment details'],500);}
