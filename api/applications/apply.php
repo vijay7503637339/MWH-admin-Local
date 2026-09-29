@@ -74,6 +74,28 @@ try {
 
     $applicationId = (int)$pdo->lastInsertId();
 
+    // Best-effort contractor notification: application creation must not fail
+    // just because the notification insert encounters an unrelated DB issue.
+    try {
+        $notice = $pdo->prepare(
+            'INSERT INTO local_notifications(user_id,type,title,message,data_json)
+             VALUES(?,?,?,?,?)'
+        );
+        $notice->execute([
+            (int)$requirement['contractor_user_id'],
+            'application',
+            'New staff application',
+            'A staff member has applied for "' . (string)$requirement['title'] . '".',
+            json_encode([
+                'application_id' => $applicationId,
+                'requirement_id' => $requirementId,
+                'staff_user_id' => (int)$user['id'],
+            ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES),
+        ]);
+    } catch (Throwable $notificationError) {
+        error_log('MWH Local application notification: ' . $notificationError->getMessage());
+    }
+
     localJson([
         'success' => true,
         'message' => 'Application submitted successfully',
