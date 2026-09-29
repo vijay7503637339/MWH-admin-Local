@@ -98,6 +98,8 @@ CREATE TABLE local_job_roles (
     category_id BIGINT UNSIGNED NOT NULL,
     name VARCHAR(150) NOT NULL,
     description VARCHAR(500) NULL,
+    job_amount DECIMAL(12,2) NOT NULL DEFAULT 0,
+    amount_period ENUM('per_day','per_month') NOT NULL DEFAULT 'per_day',
     sort_order INT NOT NULL DEFAULT 0,
     is_active TINYINT(1) NOT NULL DEFAULT 1,
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -105,6 +107,7 @@ CREATE TABLE local_job_roles (
     deleted_at TIMESTAMP NULL,
     UNIQUE KEY uq_local_job_role_category_name (category_id, name),
     INDEX idx_local_job_roles_category_active (category_id, is_active),
+    INDEX idx_local_job_roles_pricing (amount_period, job_amount),
     CONSTRAINT fk_local_job_role_category FOREIGN KEY (category_id) REFERENCES local_categories(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
