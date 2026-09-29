@@ -8,6 +8,11 @@ try{
   $q=$pdo->prepare('SELECT id,status,requirement_id,staff_user_id,start_at FROM local_assignments WHERE id=? AND staff_user_id=? LIMIT 1');$q->execute([$id,(int)$user['id']]);$a=$q->fetch(PDO::FETCH_ASSOC);
   if(!$a)localJson(['success'=>false,'message'=>'Assignment not found'],404);
   if((string)$a['status']!=='arrived')localJson(['success'=>false,'message'=>'Mark arrival before starting the duty'],409);
+  $paid=$pdo->prepare('SELECT COALESCE(SUM(amount),0) FROM local_payments WHERE assignment_id=? AND status="paid"');
+  $paid->execute([$id]);
+  $paidAmount=(float)$paid->fetchColumn();
+  $payout=(float)$a['payout_amount'];
+  if($paidAmount+0.01<$payout)localJson(['success'=>false,'code'=>'PAYMENT_NOT_VERIFIED','message'=>'Contractor payment has not been verified by admin yet'],409);
   $exists=$pdo->prepare('SELECT id FROM local_attendance WHERE assignment_id=? LIMIT 1');$exists->execute([$id]);$attId=(int)($exists->fetchColumn()?:0);
   if($attId>0){
     $pdo->prepare('UPDATE local_assignments SET status="active",start_at=COALESCE(start_at,UTC_TIMESTAMP()),updated_at=UTC_TIMESTAMP() WHERE id=?')->execute([$id]);
