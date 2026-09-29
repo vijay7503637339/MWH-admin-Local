@@ -7,6 +7,12 @@ try {
     $role = (string)$user['role'];
 
     if ($role === 'staff') {
+        $status = trim((string)($_GET['status'] ?? ''));
+        $allowedStatuses = ['assigned','arrived','active','completed'];
+        if ($status !== '' && !in_array($status, $allowedStatuses, true)) {
+            localJson(['success'=>false,'message'=>'Invalid assignment status'],422);
+        }
+        $statusWhere = $status === '' ? 'a.status<>"cancelled"' : 'a.status=?';
         $stmt = $pdo->prepare(
             'SELECT a.id assignment_id,a.requirement_id,a.contractor_user_id,a.status,a.assigned_at,a.start_at,a.end_at,a.payout_amount,a.notes,
                     r.title,r.work_location,r.work_address,r.shift_date,r.shift_start,r.shift_end,
@@ -20,12 +26,14 @@ try {
              INNER JOIN local_users u ON u.id=a.contractor_user_id
              LEFT JOIN local_applications la ON la.id=a.application_id
              LEFT JOIN local_attendance att ON att.assignment_id=a.id
-             WHERE a.staff_user_id=? AND a.status<>"cancelled"
+             undefined
              ORDER BY
                 CASE a.status WHEN "active" THEN 0 WHEN "arrived" THEN 1 WHEN "assigned" THEN 2 WHEN "completed" THEN 3 ELSE 4 END,
                 r.shift_date ASC,a.id DESC'
         );
-        $stmt->execute([(int)$user['id']]);
+        $params = [(int)$user['id']];
+        if ($status !== '') $params[] = $status;
+        $stmt->execute($params);
         localJson(['success'=>true,'data'=>['items'=>$stmt->fetchAll(PDO::FETCH_ASSOC)]]);
     }
 
