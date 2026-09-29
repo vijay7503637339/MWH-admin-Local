@@ -78,11 +78,7 @@ try {
          WHERE id=? AND requirement_id=?'
     );
 
-    $updateOthers = $pdo->prepare(
-        'UPDATE local_applications
-         SET status=?, updated_at=UTC_TIMESTAMP()
-         WHERE requirement_id=? AND id<>? AND status NOT IN ("withdrawn")'
-    );
+    $updateOthers = null;
 
     $assignmentInsert = $pdo->prepare(
         'INSERT INTO local_assignments
@@ -160,11 +156,17 @@ try {
         ]);
     }
 
-    foreach ($selectedIds as $selectedId) {
-        $updateOthers->execute(['rejected',$requirementId,$selectedId]);
-    }
+    $rejectPlaceholders = implode(',', array_fill(0, count($selectedIds), '?'));
+    $rejectParams = array_merge(['re'.'jected', $requirementId], $selectedIds);
+    $updateOthers = $pdo->prepare(
+        'UPDATE local_applications
+         SET status=?, updated_at=UTC_TIMESTAMP()
+         WHERE requirement_id=? AND id NOT IN (' . $rejectPlaceholders . ')
+         AND status NOT IN ("withdrawn","selected")'
+    );
+    $updateOthers->execute($rejectParams);
 
-    $newStatus = count($selectedIds) >= (int)$requirement['openings_count'] ? 'active' : 'active';
+    $newStatus = 'active';
     $pdo->prepare(
         'UPDATE local_requirements
          SET status=?,updated_at=UTC_TIMESTAMP()
