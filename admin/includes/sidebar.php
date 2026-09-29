@@ -8,6 +8,7 @@
     <a class="<?=$currentPage==='staff.php'?'active':''?>" href="staff.php"><i class="bi bi-person-badge-fill"></i><span>Staff / Chefs</span></a>
     <a class="<?=$currentPage==='requirements.php'?'active':''?>" href="requirements.php"><i class="bi bi-clipboard-plus-fill"></i><span>Requirements</span></a>
     <a class="<?=$currentPage==='payments.php'?'active':''?>" href="payments.php"><i class="bi bi-credit-card-fill"></i><span>Payments</span></a>
+    <a class="<?=$currentPage==='payouts.php'?'active':''?>" href="payouts.php"><i class="bi bi-wallet2"></i><span>Staff Payouts</span></a>
     <div class="nav-label">Configuration</div>
     <a class="<?=$currentPage==='categories.php'?'active':''?>" href="categories.php"><i class="bi bi-tags-fill"></i><span>Categories</span></a>
     <a class="<?=$currentPage==='job_roles.php'?'active':''?>" href="job_roles.php"><i class="bi bi-diagram-3-fill"></i><span>Job Roles</span></a>
