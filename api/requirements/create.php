@@ -18,7 +18,6 @@ try {
     }
 
     $title = trim((string)($data['title'] ?? ''));
-    $staffRole = trim((string)($data['staff_role'] ?? $data['role_name'] ?? ''));
     $categoryId = (int)($data['category_id'] ?? 0);
     $jobRoleId = (int)($data['job_role_id'] ?? 0);
     $headcount = (int)($data['headcount'] ?? $data['staff_count'] ?? $data['count'] ?? 0);
@@ -26,15 +25,15 @@ try {
     $shiftDate = trim((string)($data['shift_date'] ?? $data['date'] ?? ''));
     $shiftStart = trim((string)($data['shift_start'] ?? $data['start_time'] ?? ''));
     $shiftEnd = trim((string)($data['shift_end'] ?? $data['end_time'] ?? ''));
-    $experience = trim((string)($data['minimum_experience'] ?? $data['experience'] ?? ''));
-    $payout = (float)($data['payout_amount'] ?? $data['pay'] ?? 0);
-    $payoutPeriod = trim((string)($data['payout_period'] ?? 'per_shift'));
     $address = trim((string)($data['address'] ?? ''));
     $notes = trim((string)($data['notes'] ?? ''));
     $description = trim((string)($data['description'] ?? ''));
 
-    if ($staffRole === '' && $jobRoleId <= 0) {
-        throw new InvalidArgumentException('Staff role is required');
+    if ($categoryId <= 0) {
+        throw new InvalidArgumentException('Category is required');
+    }
+    if ($jobRoleId <= 0) {
+        throw new InvalidArgumentException('Job role is required');
     }
     if ($headcount < 1 || $headcount > 500) {
         throw new InvalidArgumentException('Headcount must be between 1 and 500');
@@ -45,42 +44,49 @@ try {
     if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $shiftDate)) {
         throw new InvalidArgumentException('shift_date must use YYYY-MM-DD format');
     }
-    if ($payout <= 0) {
-        throw new InvalidArgumentException('Payout amount must be greater than zero');
+
+    $roleStmt = $pdo->prepare(
+        'SELECT jr.id,jr.name,jr.category_id,jr.job_amount,jr.amount_period,lc.name AS category_name
+         FROM local_job_roles jr
+         INNER JOIN local_categories lc ON lc.id=jr.category_id
+         WHERE jr.id=?
+           AND jr.is_active=1
+           AND jr.deleted_at IS NULL
+           AND lc.id=?
+           AND lc.is_active=1
+           AND lc.deleted_at IS NULL
+         LIMIT 1'
+    );
+    $roleStmt->execute([$jobRoleId, $categoryId]);
+    $roleRow = $roleStmt->fetch(PDO::FETCH_ASSOC);
+
+    if (!$roleRow) {
+        throw new InvalidArgumentException('Selected category and job role are invalid');
     }
 
-    $roleName = $staffRole;
-    if ($jobRoleId > 0) {
-        $roleStmt = $pdo->prepare(
-            'SELECT jr.name,jr.category_id
-             FROM local_job_roles jr
-             WHERE jr.id=? AND jr.is_active=1 AND jr.deleted_at IS NULL
-             LIMIT 1'
-        );
-        $roleStmt->execute([$jobRoleId]);
-        $roleRow = $roleStmt->fetch(PDO::FETCH_ASSOC);
-        if (!$roleRow) {
-            throw new InvalidArgumentException('Selected job role is invalid');
-        }
-        if ($categoryId > 0 && (int)$roleRow['category_id'] !== $categoryId) {
-            throw new InvalidArgumentException('Selected job role does not match category');
-        }
-        $categoryId = (int)$roleRow['category_id'];
-        $roleName = $roleName !== '' ? $roleName : (string)$roleRow['name'];
+    $baseAmount = (float)$roleRow['job_amount'];
+    $amountPeriod = (string)$roleRow['amount_period'];
+
+    if ($baseAmount <= 0) {
+        throw new InvalidArgumentException('Selected job role does not have a valid payout amount');
     }
+
+    $totalPayout = round($baseAmount * $headcount, 2);
+    $roleName = (string)$roleRow['name'];
 
     if ($title === '') {
-        $title = $headcount . ' × ' . ($roleName !== '' ? $roleName : 'Kitchen Staff');
+        $title = $headcount . ' × ' . $roleName;
     }
 
-    $parts=[];
-    if ($description !== '') $parts[]=$description;
-    if ($roleName !== '') $parts[]='Staff role: ' . $roleName;
-    if ($shiftStart !== '' || $shiftEnd !== '') $parts[]='Shift: ' . trim($shiftStart . ' - ' . $shiftEnd, ' -');
-    if ($experience !== '') $parts[]='Minimum experience: ' . $experience;
-    if ($address !== '') $parts[]='Address: ' . $address;
+    $parts = [];
+    if ($description !== '') $parts[] = $description;
+    $parts[] = 'Staff role: ' . $roleName;
+    if ($shiftStart !== '' || $shiftEnd !== '') {
+        $parts[] = 'Shift: ' . trim($shiftStart . ' - ' . $shiftEnd, ' -');
+    }
+    if ($address !== '') $parts[] = 'Address: ' . $address;
 
-    $stmt=$pdo->prepare(
+    $stmt = $pdo->prepare(
         'INSERT INTO local_requirements
          (contractor_user_id,category_id,job_role_id,title,description,openings_count,
           work_location,work_address,shift_date,shift_start,shift_end,minimum_experience,
@@ -89,38 +95,43 @@ try {
     );
     $stmt->execute([
         (int)$user['id'],
-        $categoryId > 0 ? $categoryId : null,
-        $jobRoleId > 0 ? $jobRoleId : null,
+        $categoryId,
+        $jobRoleId,
         $title,
-        $parts ? implode("
-
-", $parts) : null,
+        $parts ? implode("\n\n", $parts) : null,
         $headcount,
         $location,
         $address !== '' ? $address : null,
         $shiftDate,
         $shiftStart !== '' ? $shiftStart : null,
         $shiftEnd !== '' ? $shiftEnd : null,
-        $experience !== '' ? $experience : null,
-        $payout,
-        $payoutPeriod !== '' ? $payoutPeriod : 'per_shift',
+        null,
+        $totalPayout,
+        $amountPeriod,
         'open',
         $notes !== '' ? $notes : null,
     ]);
-    $id=(int)$pdo->lastInsertId();
+
+    $id = (int)$pdo->lastInsertId();
 
     localJson([
-        'success'=>true,
-        'message'=>'Requirement created successfully',
-        'data'=>[
-            'requirement_id'=>$id,
-            'status'=>'open',
-            'title'=>$title,
+        'success' => true,
+        'message' => 'Requirement created successfully',
+        'data' => [
+            'requirement_id' => $id,
+            'status' => 'open',
+            'title' => $title,
+            'category_id' => $categoryId,
+            'job_role_id' => $jobRoleId,
+            'base_amount' => $baseAmount,
+            'amount_period' => $amountPeriod,
+            'headcount' => $headcount,
+            'total_payout' => $totalPayout,
         ],
-    ],201);
+    ], 201);
 } catch (InvalidArgumentException $e) {
-    localJson(['success'=>false,'message'=>$e->getMessage()],422);
+    localJson(['success' => false, 'message' => $e->getMessage()], 422);
 } catch (Throwable $e) {
-    error_log('MWH Local requirement create: '.$e->getMessage());
-    localJson(['success'=>false,'message'=>'Unable to create requirement'],500);
+    error_log('MWH Local requirement create: ' . $e->getMessage());
+    localJson(['success' => false, 'message' => 'Unable to create requirement'], 500);
 }
