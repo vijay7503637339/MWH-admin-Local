@@ -26,7 +26,7 @@ try {
              INNER JOIN local_users u ON u.id=a.contractor_user_id
              LEFT JOIN local_applications la ON la.id=a.application_id
              LEFT JOIN local_attendance att ON att.assignment_id=a.id
-             undefined
+             WHERE a.staff_user_id=? AND '.$statusWhere.'
              ORDER BY
                 CASE a.status WHEN "active" THEN 0 WHEN "arrived" THEN 1 WHEN "assigned" THEN 2 WHEN "completed" THEN 3 ELSE 4 END,
                 r.shift_date ASC,a.id DESC'
