@@ -23,7 +23,10 @@ try {
     $limit=max(1,min(100,$limit));
 
     $sql='SELECT lr.id,lr.category_id,lr.job_role_id,lr.title,lr.description,
-                 lr.openings_count,lr.work_location,lr.work_address,lr.shift_date,
+                 lr.openings_count,
+                 (SELECT COUNT(*) FROM local_applications la_count WHERE la_count.requirement_id=lr.id) AS applicant_count,
+                 (SELECT COUNT(*) FROM local_applications la_selected WHERE la_selected.requirement_id=lr.id AND la_selected.status="selected") AS selected_count,
+                 lr.work_location,lr.work_address,lr.shift_date,
                  lr.shift_start,lr.shift_end,lr.minimum_experience,lr.payout_amount,
                  lr.payout_period,lr.status,lr.notes,lr.created_at,lr.updated_at,
                  c.name AS category_name,jr.name AS job_role_name
