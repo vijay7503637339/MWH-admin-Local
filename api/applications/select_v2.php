@@ -14,7 +14,7 @@ try{
   $alreadyQ=$pdo->prepare('SELECT COUNT(*) FROM local_applications WHERE requirement_id=? AND status="selected"');$alreadyQ->execute([$requirementId]);$already=(int)$alreadyQ->fetchColumn();
   $max=(int)$req['openings_count']- $already;if($max<=0)throw new InvalidArgumentException('All openings are already filled.');
   if(count($ids)>$max)throw new InvalidArgumentException('You can select up to '.$max.' more staff.');
-  $ph=implode(',',array_fill(0,count($ids),'?'));$q=$pdo->prepare('SELECT la.id,la.staff_user_id,la.status,u.name,u.account_status FROM local_applications la INNER JOIN local_users u ON u.id=la.staff_user_id WHERE la.requirement_id=? AND la.id IN ('.$ph.') FOR UPDATE');$q->execute(array_merge([$requirementId],$ids));$rows=$q->fetchAll(PDO::FETCH_ASSOC);
+  $ph=implode(',',array_fill(0,count($ids),'?'));$q=$pdo->prepare('SELECT la.id,la.staff_user_id,la.status,u.name,u.account_status FROM local_applications la INNER JOIN local_users u ON u.id=la.staff_user_id WHERE la.requirement_id=? AND la.id IN ('.$ph.') AND la.status IN ("applied","shortlisted") FOR UPDATE');$q->execute(array_merge([$requirementId],$ids));$rows=$q->fetchAll(PDO::FETCH_ASSOC);
   if(count($rows)!==count($ids))throw new InvalidArgumentException('One or more selected applications are invalid.');
   $upd=$pdo->prepare('UPDATE local_applications SET status="selected",updated_at=UTC_TIMESTAMP() WHERE id=? AND requirement_id=?');
   $assignmentQ=$pdo->prepare('SELECT id FROM local_assignments WHERE application_id=? LIMIT 1');
