@@ -28,3 +28,35 @@ Create the first Local admin using the documented bootstrap flow in `database/RE
 The Local Flutter app should point to this backend root:
 
 `https://webstripetechnologies.com/MWH-admin-Local/api`
+
+
+## Current Local business flow
+
+The Local module is intentionally standalone from MWH Hospitality.
+
+### Production database migrations
+
+After pulling the repository, apply the current migrations to the dedicated Local database:
+
+```bash
+mysql -u YOUR_LOCAL_DB_USER -p YOUR_LOCAL_DB_NAME < database/migrations/015_payment_settings.sql
+mysql -u YOUR_LOCAL_DB_USER -p YOUR_LOCAL_DB_NAME < database/migrations/016_staff_payouts.sql
+```
+
+These add company payment settings (UPI, bank details and QR storage) and the staff payout ledger.
+
+### Finance workflow
+
+Contractors see the company UPI/bank/QR details after staff selection and submit a payment reference. Finance/super admins approve or reject that payment from the Local admin panel. The staff duty cannot be started until the contractor payment has an approved amount covering the assignment payout.
+
+When a staff member completes an active duty, a pending staff payout record is created. Finance/super admins process the payout from:
+
+`admin/payouts.php`
+
+### Local admin pages
+
+- `admin/payments.php` — company payment details and contractor payment approval
+- `admin/payouts.php` — staff payout processing
+- `admin/requirements.php` — contractor requirements
+- `admin/contractors.php` — contractor accounts
+- `admin/staff.php` — staff accounts
