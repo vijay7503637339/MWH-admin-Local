@@ -20,12 +20,16 @@ try {
                     la.status AS application_status,
                     att.check_in_at,att.check_out_at,
                     COALESCE((SELECT SUM(p.amount) FROM local_payments p WHERE p.assignment_id=a.id AND p.status="paid"),0) AS paid_amount,
-                    COALESCE((SELECT SUM(p.amount) FROM local_payments p WHERE p.assignment_id=a.id AND p.status="pending"),0) AS pending_payment_amount
+                    COALESCE((SELECT SUM(p.amount) FROM local_payments p WHERE p.assignment_id=a.id AND p.status="pending"),0) AS pending_payment_amount,
+                    COALESCE(sp.amount,a.payout_amount) AS staff_payout_amount,
+                    COALESCE(sp.status,CASE WHEN a.status="completed" THEN "pending" ELSE "not_ready" END) AS staff_payout_status,
+                    sp.paid_at AS staff_payout_paid_at
              FROM local_assignments a
              INNER JOIN local_requirements r ON r.id=a.requirement_id
              INNER JOIN local_users u ON u.id=a.contractor_user_id
              LEFT JOIN local_applications la ON la.id=a.application_id
              LEFT JOIN local_attendance att ON att.assignment_id=a.id
+             LEFT JOIN local_staff_payouts sp ON sp.assignment_id=a.id AND sp.staff_user_id=a.staff_user_id
              WHERE a.staff_user_id=? AND '.$statusWhere.'
              ORDER BY
                 CASE a.status WHEN "active" THEN 0 WHEN "arrived" THEN 1 WHEN "assigned" THEN 2 WHEN "completed" THEN 3 ELSE 4 END,
