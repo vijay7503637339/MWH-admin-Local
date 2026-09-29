@@ -1,6 +1,7 @@
 <?php
 declare(strict_types=1);
 require_once __DIR__ . '/../auth/helpers.php';
+require_once __DIR__ . '/../config/pricing.php';
 if(($_SERVER['REQUEST_METHOD']??'')!=='POST')localJson(['success'=>false,'message'=>'POST request required'],405);
 try{
   $user=localRequireUser($pdo);if((string)$user['role']!=='contractor')localJson(['success'=>false,'message'=>'Contractor access is required'],403);
@@ -8,9 +9,16 @@ try{
   if($requirementId<=0||!is_array($ids))localJson(['success'=>false,'message'=>'Valid requirement_id and application_ids are required'],422);
   $ids=array_values(array_unique(array_filter(array_map(static fn($x)=>(int)$x,$ids),static fn($x)=>$x>0)));if(!$ids)localJson(['success'=>false,'message'=>'Select at least one applicant'],422);
   $pdo->beginTransaction();
-  $rq=$pdo->prepare('SELECT id,title,openings_count,shift_date,shift_start,shift_end,work_location,payout_amount,status FROM local_requirements WHERE id=? AND contractor_user_id=? AND deleted_at IS NULL LIMIT 1');$rq->execute([$requirementId,(int)$user['id']]);$req=$rq->fetch(PDO::FETCH_ASSOC);
+  $rq=$pdo->prepare('SELECT id,title,openings_count,shift_date,shift_start,shift_end,work_location,payout_amount,status,job_role_id,category_id FROM local_requirements WHERE id=? AND contractor_user_id=? AND deleted_at IS NULL LIMIT 1');$rq->execute([$requirementId,(int)$user['id']]);$req=$rq->fetch(PDO::FETCH_ASSOC);
   if(!$req)throw new InvalidArgumentException('Requirement not found.');
   if(!in_array((string)$req['status'],['open','active'],true))throw new InvalidArgumentException('Requirement is not available for staff selection.');
+  $rolePricingQ=$pdo->prepare('SELECT jr.job_amount,jr.amount_period FROM local_job_roles jr WHERE jr.id=? AND jr.is_active=1 AND jr.deleted_at IS NULL LIMIT 1');
+  $rolePricingQ->execute([(int)$req['job_role_id']]);
+  $rolePricing=$rolePricingQ->fetch(PDO::FETCH_ASSOC) ?: null;
+  $grossPerStaff=$rolePricing ? (float)$rolePricing['job_amount'] : ((int)$req['openings_count']>0 ? (float)$req['payout_amount']/(int)$req['openings_count'] : (float)$req['payout_amount']);
+  if($grossPerStaff<=0)throw new InvalidArgumentException('Job role payout is not configured.');
+  $staffPayout=localStaffNetAmount($grossPerStaff);
+
   $alreadyQ=$pdo->prepare('SELECT COUNT(*) FROM local_applications WHERE requirement_id=? AND status="selected"');$alreadyQ->execute([$requirementId]);$already=(int)$alreadyQ->fetchColumn();
   $max=(int)$req['openings_count']- $already;if($max<=0)throw new InvalidArgumentException('All openings are already filled.');
   if(count($ids)>$max)throw new InvalidArgumentException('You can select up to '.$max.' more staff.');
@@ -26,7 +34,7 @@ try{
     $assignmentQ->execute([(int)$row['id']]);
     if(!$assignmentQ->fetchColumn()){
       $start=$req['shift_date'].' '.((string)$req['shift_start']!==''?$req['shift_start']:'00:00:00');
-      $insert->execute([$requirementId,(int)$row['id'],(int)$row['staff_user_id'],(int)$user['id'],$start,(float)$req['payout_amount']]);
+      $insert->execute([$requirementId,(int)$row['id'],(int)$row['staff_user_id'],(int)$user['id'],$start,$staffPayout]);
     }
     $timing=trim((string)$req['shift_start'].' - '.(string)$req['shift_end'],' -');
     $message='You have been selected for "'.(string)$req['title'].'". Date: '.(string)$req['shift_date'];if($timing!=='')$message.=' • '.$timing;if((string)$req['work_location']!=='')$message.=' • '.(string)$req['work_location'];
