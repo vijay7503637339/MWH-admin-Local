@@ -11,6 +11,8 @@ try{
   $pdo->beginTransaction();
   $pdo->prepare('UPDATE local_attendance SET check_out_at=UTC_TIMESTAMP(),updated_at=UTC_TIMESTAMP() WHERE assignment_id=? AND staff_user_id=? AND check_out_at IS NULL')->execute([$id,(int)$user['id']]);
   $pdo->prepare('UPDATE local_assignments SET status="completed",end_at=UTC_TIMESTAMP(),updated_at=UTC_TIMESTAMP() WHERE id=?')->execute([$id]);
+  $payout=$pdo->prepare('INSERT INTO local_staff_payouts(assignment_id,staff_user_id,amount,status) VALUES(?,?,?,"pending") ON DUPLICATE KEY UPDATE amount=VALUES(amount),updated_at=UTC_TIMESTAMP()');
+  $payout->execute([$id,(int)$user['id'],(float)($a['payout_amount']??0)]);
   $pdo->commit();
   localJson(['success'=>true,'message'=>'Duty completed','data'=>['assignment_id'=>$id,'status'=>'completed']]);
 }catch(Throwable $e){if($pdo->inTransaction())$pdo->rollBack();error_log('MWH Local duty complete: '.$e->getMessage());localJson(['success'=>false,'message'=>'Unable to complete duty'],500);}
