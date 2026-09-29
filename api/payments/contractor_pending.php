@@ -16,5 +16,15 @@ try{
           $settings['qr_base64']='data:'.((new finfo(FILEINFO_MIME_TYPE))->file($qrFull)).';base64,'.base64_encode((string)file_get_contents($qrFull));
       }
   }
+  if (!empty($settings['qr_code_path'])) {
+      $full = dirname(__DIR__, 2) . '/' . ltrim((string)$settings['qr_code_path'], '/');
+      if (is_file($full) && is_readable($full)) {
+          $mime = mime_content_type($full) ?: 'image/png';
+          $bytes = file_get_contents($full);
+          if ($bytes !== false) {
+              $settings['qr_code_data'] = 'data:' . $mime . ';base64,' . base64_encode($bytes);
+          }
+      }
+  }
   localJson(['success'=>true,'data'=>['settings'=>$settings,'items'=>$items]]);
 }catch(Throwable $e){error_log('MWH Local contractor pending payment: '.$e->getMessage());localJson(['success'=>false,'message'=>'Unable to load payment details'],500);}
