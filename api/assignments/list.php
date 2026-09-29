@@ -1,0 +1,51 @@
+<?php
+declare(strict_types=1);
+require_once __DIR__ . '/../auth/helpers.php';
+
+try {
+    $user = localRequireUser($pdo);
+    $role = (string)$user['role'];
+
+    if ($role === 'staff') {
+        $stmt = $pdo->prepare(
+            'SELECT a.id assignment_id,a.requirement_id,a.contractor_user_id,a.status,a.assigned_at,a.start_at,a.end_at,a.payout_amount,a.notes,
+                    r.title,r.work_location,r.work_address,r.shift_date,r.shift_start,r.shift_end,
+                    u.name AS contractor_name,
+                    la.status AS application_status,
+                    att.check_in_at,att.check_out_at
+             FROM local_assignments a
+             INNER JOIN local_requirements r ON r.id=a.requirement_id
+             INNER JOIN local_users u ON u.id=a.contractor_user_id
+             LEFT JOIN local_applications la ON la.id=a.application_id
+             LEFT JOIN local_attendance att ON att.assignment_id=a.id
+             WHERE a.staff_user_id=? AND a.status<>"cancelled"
+             ORDER BY
+                CASE a.status WHEN "active" THEN 0 WHEN "arrived" THEN 1 WHEN "assigned" THEN 2 WHEN "completed" THEN 3 ELSE 4 END,
+                r.shift_date ASC,a.id DESC'
+        );
+        $stmt->execute([(int)$user['id']]);
+        localJson(['success'=>true,'data'=>['items'=>$stmt->fetchAll(PDO::FETCH_ASSOC)]]);
+    }
+
+    if ($role === 'contractor') {
+        $stmt = $pdo->prepare(
+            'SELECT a.id assignment_id,a.requirement_id,a.staff_user_id,a.status,a.assigned_at,a.start_at,a.end_at,a.payout_amount,a.notes,
+                    r.title,r.work_location,r.shift_date,r.shift_start,r.shift_end,
+                    s.name AS staff_name,s.mobile AS staff_mobile,
+                    att.check_in_at,att.check_out_at
+             FROM local_assignments a
+             INNER JOIN local_requirements r ON r.id=a.requirement_id
+             INNER JOIN local_users s ON s.id=a.staff_user_id
+             LEFT JOIN local_attendance att ON att.assignment_id=a.id
+             WHERE a.contractor_user_id=? AND a.status<>"cancelled"
+             ORDER BY r.shift_date ASC,a.id DESC'
+        );
+        $stmt->execute([(int)$user['id']]);
+        localJson(['success'=>true,'data'=>['items'=>$stmt->fetchAll(PDO::FETCH_ASSOC)]]);
+    }
+
+    localJson(['success'=>false,'message'=>'Unsupported account role'],403);
+} catch (Throwable $e) {
+    error_log('MWH Local assignments list: ' . $e->getMessage());
+    localJson(['success'=>false,'message'=>'Unable to load assignments'],500);
+}
