@@ -234,7 +234,7 @@ require __DIR__.'/includes/sidebar.php';
         <td><?=pe($p['contractor_name'])?></td><td><?=pe($p['staff_name'])?></td>
         <td><strong><?=pe($p['title'])?></strong><div class="muted" style="font-size:10px"><?=pe($p['shift_date'])?> · <?=pe($p['work_location'])?></div></td>
         <td>₹<?=number_format((float)$p['amount'],2)?></td><td><?=pe(ucwords(str_replace('_',' ',$p['payment_method'])))?></td>
-        <td><?=pe($p['transaction_reference']?:'—')?></td>
+        <td><?php if(!empty($p['payment_screenshot_path'])):?><a href="../<?=pe($p['payment_screenshot_path'])?>" target="_blank" rel="noopener" title="Open payment screenshot"><img src="../<?=pe($p['payment_screenshot_path'])?>" alt="Payment screenshot" style="width:72px;height:54px;object-fit:cover;border-radius:8px;border:1px solid #e1e7f0;background:#f7f9fc"></a><?php else:?><span class="muted">—</span><?php endif;?></td>
         <td><span class="status <?=pe($p['status'])?>"><?=pe(ucwords($p['status']))?></span></td>
         <td>
           <?php if($p['status']==='pending'):?>
