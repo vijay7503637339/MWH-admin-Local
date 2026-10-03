@@ -45,9 +45,11 @@ mysql -u YOUR_LOCAL_DB_USER -p YOUR_LOCAL_DB_NAME < database/migrations/017_duty
 mysql -u YOUR_LOCAL_DB_USER -p YOUR_LOCAL_DB_NAME < database/migrations/018_job_role_pricing.sql
 mysql -u YOUR_LOCAL_DB_USER -p YOUR_LOCAL_DB_NAME < database/migrations/019_assignment_payout_split.sql
 mysql -u YOUR_LOCAL_DB_USER -p YOUR_LOCAL_DB_NAME < database/migrations/020_fcm_tokens.sql
+mysql -u YOUR_LOCAL_DB_USER -p YOUR_LOCAL_DB_NAME < database/migrations/021_payment_screenshot.sql
+mysql -u YOUR_LOCAL_DB_USER -p YOUR_LOCAL_DB_NAME < database/migrations/022_password_reset_otps.sql
 ```
 
-These add company payment settings (UPI, bank details and QR storage), the staff payout ledger, the duty arrival attendance timestamp, job-role pricing defaults, and the split between gross contractor assignment amount and net staff payout.
+These add company payment settings (UPI, bank details and QR storage), the staff payout ledger, the duty arrival attendance timestamp, job-role pricing defaults, the split between gross contractor assignment amount and net staff payout, the payment screenshot column, and short-lived password-reset OTP storage.
 
 ### Finance workflow
 
@@ -84,3 +86,10 @@ Automatic pushes included:
 - Admin manual notification -> selected user group or individual user
 
 The in-app notification record is also stored in `local_notifications`, so the message remains visible in the app when a device has no active push token.
+
+
+## Password reset by email OTP
+
+The Local app password-reset flow uses `POST /api/auth/request_password_reset.php` to send a 6-digit OTP to the email stored on the matching `local_users` record, followed by `POST /api/auth/reset_password.php` to verify the OTP and replace the password. A successful reset revokes existing API sessions for that account.
+
+The backend uses PHP's native `mail()` function through the cPanel mail service. The sender is configured as `support@webstripetechnologies.com` in `api/config/password_reset.php`. Make sure that mailbox/domain mail delivery is active on cPanel and that SPF/DKIM records are configured for `webstripetechnologies.com` so OTP messages can be delivered reliably.
