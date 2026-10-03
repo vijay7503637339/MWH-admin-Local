@@ -73,11 +73,7 @@ The Flutter app uses Firebase Cloud Messaging (FCM) for push notifications. The 
 
 `android/app/google-services.json`
 
-The backend sends notifications through the FCM HTTP v1 API. Keep the Firebase service-account JSON outside Git and outside the public web root when possible. The backend looks for:
-
-`<project-root>/private/firebase-service-account.json`
-
-On a typical cPanel layout it can also be stored at `/home/ACCOUNT/private/firebase-service-account.json`. The absolute path can be supplied with the `MWH_FCM_SERVICE_ACCOUNT` environment variable.
+The backend sends notifications through the FCM HTTP v1 API. Keep the Firebase service-account JSON outside Git and outside the public web root when possible. The backend looks for `api/config/firebase-service-account.json`. A dummy template is included at `api/config/firebase-service-account.json.example`; copy it to `firebase-service-account.json` on the server and replace the placeholder values with the real Firebase service-account JSON. The real credential is ignored by Git.
 
 The Firebase service account needs permission to send FCM messages. After placing the credential on the server, use `admin/notifications.php` to send a manual push.
 
