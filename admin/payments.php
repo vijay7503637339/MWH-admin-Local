@@ -97,8 +97,8 @@ if(($_SERVER['REQUEST_METHOD']??'')==='POST'){
 
                 $contractorTitle = $newStatus==='paid' ? 'Payment approved' : 'Payment rejected';
                 $contractorMessage = $newStatus==='paid'
-                    ? 'Your payment of ₹'.number_format((float)$payment['amount'],2).' for "'.(string)$payment['title'].'" has been approved by admin.'
-                    : 'Your payment of ₹'.number_format((float)$payment['amount'],2).' for "'.(string)$payment['title'].'" was rejected by admin.';
+                    ? 'Your payment has been approved by the admin. Amount: ₹'.number_format((float)$payment['amount'],2).' for "'.(string)$payment['title'].'".'
+                    : 'Your payment was rejected by the admin. Amount: ₹'.number_format((float)$payment['amount'],2).' for "'.(string)$payment['title'].'".';
                 $contractorNotice=$pdo->prepare('INSERT INTO local_notifications(user_id,admin_user_id,type,title,message,data_json) VALUES(?,?,?,?,?,?)');
                 $contractorNotice->execute([
                     (int)$payment['contractor_user_id'],$admin['id'],$type,$contractorTitle,$contractorMessage,
