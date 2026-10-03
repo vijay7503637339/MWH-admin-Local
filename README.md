@@ -44,6 +44,7 @@ mysql -u YOUR_LOCAL_DB_USER -p YOUR_LOCAL_DB_NAME < database/migrations/016_staf
 mysql -u YOUR_LOCAL_DB_USER -p YOUR_LOCAL_DB_NAME < database/migrations/017_duty_attendance.sql
 mysql -u YOUR_LOCAL_DB_USER -p YOUR_LOCAL_DB_NAME < database/migrations/018_job_role_pricing.sql
 mysql -u YOUR_LOCAL_DB_USER -p YOUR_LOCAL_DB_NAME < database/migrations/019_assignment_payout_split.sql
+mysql -u YOUR_LOCAL_DB_USER -p YOUR_LOCAL_DB_NAME < database/migrations/020_fcm_tokens.sql
 ```
 
 These add company payment settings (UPI, bank details and QR storage), the staff payout ledger, the duty arrival attendance timestamp, job-role pricing defaults, and the split between gross contractor assignment amount and net staff payout.
@@ -64,3 +65,26 @@ When a staff member completes an active duty, a pending staff payout record is c
 - `admin/requirements.php` — contractor requirements
 - `admin/contractors.php` — contractor accounts
 - `admin/staff.php` — staff accounts
+
+
+## Firebase push notifications
+
+The Flutter app uses Firebase Cloud Messaging (FCM) for push notifications. The Android Firebase config is kept in the Flutter app at:
+
+`android/app/google-services.json`
+
+The backend sends notifications through the FCM HTTP v1 API. Keep the Firebase service-account JSON outside Git and outside the public web root when possible. The backend looks for:
+
+`<project-root>/private/firebase-service-account.json`
+
+or the absolute path from the `MWH_FCM_SERVICE_ACCOUNT` environment variable.
+
+The Firebase service account needs permission to send FCM messages. After placing the credential on the server, use `admin/notifications.php` to send a manual push.
+
+Automatic pushes included:
+- New contractor job posted -> all verified staff with registered FCM tokens
+- Staff selected for a job -> selected staff
+- New staff application -> contractor
+- Admin manual notification -> selected user group or individual user
+
+The in-app notification record is also stored in `local_notifications`, so the message remains visible in the app when a device has no active push token.
