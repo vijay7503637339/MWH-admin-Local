@@ -113,7 +113,7 @@ if(($_SERVER['REQUEST_METHOD']??'')==='POST'){
                     json_encode(['payment_id'=>$paymentId,'assignment_id'=>(int)$payment['assignment_id'],'status'=>$statusText],JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES)
                 ]);
 
-                $log=$pdo->prepare('INSERT INTO local_audit_logs(actor_type,actor_id,action,entity_type,entity_id,new_values,ip_address,user_agent) VALUES(?,?,?,?,?,?,?,?,?)');
+                $log=$pdo->prepare('INSERT INTO local_audit_logs(actor_type,actor_id,action,entity_type,entity_id,new_values,ip_address,user_agent) VALUES(?,?,?,?,?,?,?,?)');
                 $log->execute(['local_admin',$admin['id'],'payment.status_changed','local_payment',$paymentId,json_encode(['status'=>$newStatus],JSON_UNESCAPED_UNICODE),$_SERVER['REMOTE_ADDR']??null,$_SERVER['HTTP_USER_AGENT']??null]);
 
                 $pdo->commit();
