@@ -66,16 +66,24 @@ if(($_SERVER['REQUEST_METHOD']??'')==='POST'){
                     $assignmentStmt->execute([(int)$payment['assignment_id']]);
                     $assignment=$assignmentStmt->fetch(PDO::FETCH_ASSOC);
                     if($assignment && $covered >= (float)$assignment['payout_amount']){
-                        $payoutInsert=$pdo->prepare(
-                            'INSERT INTO local_staff_payouts
-                             SET assignment_id=?,staff_user_id=?,amount=?,status="pending"
-                             ON DUPLICATE KEY UPDATE amount=VALUES(amount),updated_at=UTC_TIMESTAMP()'
-                        );
-                        $payoutInsert->execute([
-                            (int)$payment['assignment_id'],
-                            (int)$assignment['staff_user_id'],
-                            (float)($assignment['staff_payout_amount'] ?? localStaffNetAmount((float)$assignment['payout_amount']))
-                        ]);
+                        $staffNet=(float)($assignment['staff_payout_amount'] ?? localStaffNetAmount((float)$assignment['payout_amount']));
+                        $existingPayout=$pdo->prepare('SELECT id FROM local_staff_payouts WHERE assignment_id=? LIMIT 1');
+                        $existingPayout->execute([(int)$payment['assignment_id']]);
+                        $existingPayoutId=(int)($existingPayout->fetchColumn() ?: 0);
+
+                        if($existingPayoutId>0){
+                            $payoutUpdate=$pdo->prepare('UPDATE local_staff_payouts SET amount=?,updated_at=UTC_TIMESTAMP() WHERE id=?');
+                            $payoutUpdate->execute([$staffNet,$existingPayoutId]);
+                        }else{
+                            $payoutInsert=$pdo->prepare(
+                                'INSERT INTO local_staff_payouts (assignment_id,staff_user_id,amount) VALUES (?,?,?)'
+                            );
+                            $payoutInsert->execute([
+                                (int)$payment['assignment_id'],
+                                (int)$assignment['staff_user_id'],
+                                $staffNet
+                            ]);
+                        }
                     }
 
                     $title='Payment approved';
