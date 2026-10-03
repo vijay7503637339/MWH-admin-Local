@@ -2,6 +2,7 @@
 declare(strict_types=1);
 require_once __DIR__ . '/../auth/helpers.php';
 require_once __DIR__ . '/../config/pricing.php';
+require_once __DIR__ . '/../config/fcm.php';
 if(($_SERVER['REQUEST_METHOD']??'')!=='POST')localJson(['success'=>false,'message'=>'POST request required'],405);
 try{
   $user=localRequireUser($pdo);if((string)$user['role']!=='contractor')localJson(['success'=>false,'message'=>'Contractor access is required'],403);
@@ -25,6 +26,7 @@ try{
   $assignmentQ=$pdo->prepare('SELECT id FROM local_assignments WHERE application_id=? LIMIT 1');
   $insert=$pdo->prepare('INSERT INTO local_assignments(requirement_id,application_id,staff_user_id,contractor_user_id,status,start_at,payout_amount,staff_payout_amount,notes) VALUES(?,?,?,?,"assigned",?,?,?,NULL)');
   $notify=$pdo->prepare('INSERT INTO local_notifications(user_id,type,title,message,data_json) VALUES(?,?,?,?,?)');
+  $pushStaffUserIds=[];
   foreach($rows as $row){
     if((string)$row['account_status']!=='verified')throw new InvalidArgumentException('Selected staff must be verified: '.(string)$row['name']);
     $upd->execute([(int)$row['id'],$requirementId]);
@@ -36,11 +38,31 @@ try{
     $timing=trim((string)$req['shift_start'].' - '.(string)$req['shift_end'],' -');
     $message='You have been selected for "'.(string)$req['title'].'". Date: '.(string)$req['shift_date'];if($timing!=='')$message.=' • '.$timing;if((string)$req['work_location']!=='')$message.=' • '.(string)$req['work_location'];
     $notify->execute([(int)$row['staff_user_id'],'selection','You have been selected',$message,json_encode(['requirement_id'=>$requirementId,'application_id'=>(int)$row['id']],JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES)]);
+    $pushStaffUserIds[]=(int)$row['staff_user_id'];
   }
   $reject=$pdo->prepare('UPDATE local_applications SET status="rejected",updated_at=UTC_TIMESTAMP() WHERE requirement_id=? AND id NOT IN ('.$ph.') AND status IN ("applied","shortlisted")');$reject->execute(array_merge([$requirementId],$ids));
   $selectedQ=$pdo->prepare('SELECT COUNT(*) FROM local_applications WHERE requirement_id=? AND status="selected"');$selectedQ->execute([$requirementId]);$selectedTotal=(int)$selectedQ->fetchColumn();
   $newStatus=$selectedTotal>=(int)$req['openings_count']?'active':'open';
   $pdo->prepare('UPDATE local_requirements SET status=?,updated_at=UTC_TIMESTAMP() WHERE id=?')->execute([$newStatus,$requirementId]);
-  $pdo->commit();localJson(['success'=>true,'message'=>'Staff selection submitted','data'=>['requirement_id'=>$requirementId,'selected_count'=>count($ids),'total_selected'=>$selectedTotal,'status'=>$newStatus]]);
+  $pdo->commit();
+
+  $pushReport=['ok'=>true,'requested'=>0,'sent'=>0,'failed'=>0,'message'=>'No push attempted.'];
+  try{
+    if($pushStaffUserIds){
+      $tokens=localFcmTokensForUsers($pdo,$pushStaffUserIds);
+      $pushReport=localFcmSendTokens(
+        $pdo,
+        $tokens,
+        'You have been selected',
+        'You have been selected for "' . (string)$req['title'] . '" on ' . (string)$req['shift_date'],
+        ['screen'=>'application','requirement_id'=>$requirementId]
+      );
+    }
+  }catch(Throwable $notificationError){
+    error_log('MWH Local selection push: '.$notificationError->getMessage());
+    $pushReport=['ok'=>false,'requested'=>0,'sent'=>0,'failed'=>0,'message'=>'Selection saved, but push notification failed.'];
+  }
+
+  localJson(['success'=>true,'message'=>'Staff selection submitted','data'=>['requirement_id'=>$requirementId,'selected_count'=>count($ids),'total_selected'=>$selectedTotal,'status'=>$newStatus,'push_notification'=>$pushReport]]);
 }catch(InvalidArgumentException $e){if($pdo->inTransaction())$pdo->rollBack();localJson(['success'=>false,'message'=>$e->getMessage()],422);}
 catch(Throwable $e){if($pdo->inTransaction())$pdo->rollBack();error_log('MWH Local select v2: '.$e->getMessage());localJson(['success'=>false,'message'=>'Unable to submit staff selection'],500);}
