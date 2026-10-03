@@ -2,6 +2,8 @@
 <aside class="sidebar">
   <div class="brand"><div class="brand-mark">MWH</div><div class="brand-copy"><strong>Maan World</strong><span>Local Admin</span></div></div>
   <nav class="nav">
+    <a class="<?=$currentPage==='notifications.php'?'active':''?>" href="notifications.php"><i class="bi bi-bell-fill"></i><span>Notifications</span></a>
+
     <div class="nav-label">MWH Local</div>
     <a class="<?=$currentPage==='dashboard.php'?'active':''?>" href="dashboard.php"><i class="bi bi-grid-1x2-fill"></i><span>Dashboard</span></a>
     <a class="<?=$currentPage==='contractors.php'?'active':''?>" href="contractors.php"><i class="bi bi-briefcase-fill"></i><span>Contractors</span></a>
