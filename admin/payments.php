@@ -68,8 +68,7 @@ if(($_SERVER['REQUEST_METHOD']??'')==='POST'){
                     if($assignment && $covered >= (float)$assignment['payout_amount']){
                         $payoutInsert=$pdo->prepare(
                             'INSERT INTO local_staff_payouts
-                             (assignment_id,staff_user_id,amount,status)
-                             VALUES(?,?,?,"pending")
+                             SET assignment_id=?,staff_user_id=?,amount=?,status="pending"
                              ON DUPLICATE KEY UPDATE amount=VALUES(amount),updated_at=UTC_TIMESTAMP()'
                         );
                         $payoutInsert->execute([
