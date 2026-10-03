@@ -184,7 +184,7 @@ if(($_SERVER['REQUEST_METHOD']??'')==='POST'){
 }
 
 $payments=$pdo->query(
-    'SELECT p.id,p.amount,p.payment_date,p.payment_method,p.transaction_reference,p.status,p.created_at,
+    'SELECT p.id,p.amount,p.payment_date,p.payment_method,p.transaction_reference,p.payment_screenshot_path,p.status,p.created_at,
             r.title,r.work_location,r.shift_date,
             s.name AS staff_name,c.name AS contractor_name
      FROM local_payments p
@@ -228,7 +228,7 @@ require __DIR__.'/includes/sidebar.php';
 
   <section class="panel mt-3">
     <div class="panel-head"><div><h2>Payment approval queue</h2><p class="muted">Approve only after verifying the contractor payment.</p></div></div>
-    <div class="table-wrap"><table class="table table-hover align-middle"><thead><tr><th>Contractor</th><th>Staff</th><th>Requirement</th><th>Amount</th><th>Method</th><th>Reference</th><th>Status</th><th>Action</th></tr></thead><tbody>
+    <div class="table-wrap"><table class="table table-hover align-middle"><thead><tr><th>Contractor</th><th>Staff</th><th>Requirement</th><th>Amount</th><th>Method</th><th>Payment Screenshot</th><th>Status</th><th>Action</th></tr></thead><tbody>
     <?php if(!$payments):?><tr><td colspan="8" class="text-center muted py-5">No payment records yet.</td></tr><?php else:foreach($payments as $p):?>
       <tr>
         <td><?=pe($p['contractor_name'])?></td><td><?=pe($p['staff_name'])?></td>
