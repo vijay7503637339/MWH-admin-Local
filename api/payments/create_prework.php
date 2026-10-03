@@ -91,10 +91,11 @@ try {
     }
 
     try {
+        $screenshotPath = 'uploads/payment_proofs/' . $fileName;
         $stmt = $pdo->prepare(
             'INSERT INTO local_payments
              (assignment_id,staff_user_id,contractor_user_id,amount,payment_date,payment_method,transaction_reference,payment_screenshot_path,status)
-             VALUES(?,?,?,?,UTC_DATE(),?,?,NULL,? )'
+             VALUES(?,?,?,?,UTC_DATE(),?,?,?,?)'
         );
         $stmt->execute([
             $assignmentId,
@@ -102,19 +103,11 @@ try {
             (int)$user['id'],
             $amount,
             $method,
+            null,
+            $screenshotPath,
             'pending'
         ]);
-
-        // The statement above intentionally omits the screenshot path; update it
-        // immediately so the payment row keeps the same generated file reference.
         $paymentId = (int)$pdo->lastInsertId();
-        $update = $pdo->prepare(
-            'UPDATE local_payments SET payment_screenshot_path=? WHERE id=?'
-        );
-        $update->execute([
-            'uploads/payment_proofs/' . $fileName,
-            $paymentId
-        ]);
     } catch (Throwable $dbError) {
         @unlink($targetPath);
         throw $dbError;
