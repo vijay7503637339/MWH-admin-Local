@@ -4,7 +4,7 @@ require_once __DIR__ . '/../auth/helpers.php';
 try{
   $user=localRequireUser($pdo);
   if((string)$user['role']!=='contractor')localJson(['success'=>false,'message'=>'Contractor access is required'],403);
-  $stmt=$pdo->prepare('SELECT a.id assignment_id,a.staff_user_id,a.payout_amount,r.title,r.work_location,r.shift_date,s.name AS staff_name,COALESCE(SUM(CASE WHEN p.status="paid" THEN p.amount ELSE 0 END),0) paid_amount,COALESCE(SUM(CASE WHEN p.status="pending" THEN p.amount ELSE 0 END),0) pending_amount FROM local_assignments a INNER JOIN local_requirements r ON r.id=a.requirement_id INNER JOIN local_users s ON s.id=a.staff_user_id LEFT JOIN local_payments p ON p.assignment_id=a.id WHERE a.contractor_user_id=? AND a.status IN ("assigned","arrived","active","completed") GROUP BY a.id ORDER BY r.shift_date ASC,a.id ASC');
+  $stmt=$pdo->prepare('SELECT a.id assignment_id,a.staff_user_id,a.payout_amount,r.title,r.work_location,r.shift_date,s.name AS staff_name,COALESCE(SUM(CASE WHEN p.status="paid" THEN p.amount ELSE 0 END),0) paid_amount,COALESCE(SUM(CASE WHEN p.status="pending" THEN p.amount ELSE 0 END),0) pending_amount FROM local_assignments a INNER JOIN local_requirements r ON r.id=a.requirement_id INNER JOIN local_users s ON s.id=a.staff_user_id LEFT JOIN local_payments p ON p.assignment_id=a.id WHERE a.contractor_user_id=? AND a.status="completed" GROUP BY a.id ORDER BY r.shift_date ASC,a.id ASC');
   $stmt->execute([(int)$user['id']]);
   $items=$stmt->fetchAll(PDO::FETCH_ASSOC);
   $settings=[];
