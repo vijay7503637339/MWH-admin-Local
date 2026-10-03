@@ -19,7 +19,14 @@ function localFcmServiceAccountPath(): string
         return $env;
     }
 
-    return dirname(__DIR__, 2) . '/private/firebase-service-account.json';
+    $projectPrivate = dirname(__DIR__, 2) . '/private/firebase-service-account.json';
+    if (is_file($projectPrivate)) {
+        return $projectPrivate;
+    }
+
+    // Common cPanel layout: project is under public_html and credential is
+    // stored one level above public_html.
+    return dirname(__DIR__, 4) . '/private/firebase-service-account.json';
 }
 
 function localFcmBase64Url(string $value): string
