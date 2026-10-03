@@ -185,9 +185,6 @@ function localFcmSendTokens(
                 'data' => array_map(static fn($v) => (string)$v, $data),
                 'android' => [
                     'priority' => 'HIGH',
-                    'notification' => [
-                        'channel_id' => 'mwh_local_notifications',
-                    ],
                 ],
             ],
         ];
