@@ -216,7 +216,7 @@ function localFcmSendTokens(
         $errorJson = json_decode((string)$response, true);
         $errorStatus = (string)($errorJson['error']['status'] ?? '');
 
-        if (in_array($errorStatus, ['UNREGISTERED', 'INVALID_ARGUMENT'], true) || $status === 404) {
+        if ($errorStatus === 'UNREGISTERED' || $status === 404) {
             $pdo->prepare(
                 'UPDATE local_fcm_tokens
                  SET disabled_at=UTC_TIMESTAMP(),updated_at=UTC_TIMESTAMP()
