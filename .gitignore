@@ -1,0 +1,4 @@
+/private/firebase-service-account.json
+/private/*.json
+api/config/database.php
+api/config/security.php
