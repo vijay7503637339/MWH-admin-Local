@@ -77,7 +77,7 @@ The backend sends notifications through the FCM HTTP v1 API. Keep the Firebase s
 
 `<project-root>/private/firebase-service-account.json`
 
-or the absolute path from the `MWH_FCM_SERVICE_ACCOUNT` environment variable.
+On a typical cPanel layout it can also be stored at `/home/ACCOUNT/private/firebase-service-account.json`. The absolute path can be supplied with the `MWH_FCM_SERVICE_ACCOUNT` environment variable.
 
 The Firebase service account needs permission to send FCM messages. After placing the credential on the server, use `admin/notifications.php` to send a manual push.
 
