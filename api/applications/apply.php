@@ -2,6 +2,7 @@
 declare(strict_types=1);
 
 require_once __DIR__ . '/../auth/helpers.php';
+require_once __DIR__ . '/../config/fcm.php';
 
 if (($_SERVER['REQUEST_METHOD'] ?? '') !== 'POST') {
     localJson(['success' => false, 'message' => 'POST request required'], 405);
@@ -94,6 +95,25 @@ try {
         ]);
     } catch (Throwable $notificationError) {
         error_log('MWH Local application notification: ' . $notificationError->getMessage());
+    }
+
+    try {
+        $tokens = localFcmTokensForUsers($pdo, [(int)$requirement['contractor_user_id']]);
+        if ($tokens) {
+            localFcmSendTokens(
+                $pdo,
+                $tokens,
+                'New staff application',
+                'A staff member has applied for "' . (string)$requirement['title'] . '".',
+                [
+                    'screen' => 'applications',
+                    'requirement_id' => $requirementId,
+                    'application_id' => $applicationId,
+                ]
+            );
+        }
+    } catch (Throwable $pushError) {
+        error_log('MWH Local application push: ' . $pushError->getMessage());
     }
 
     localJson([
