@@ -5,6 +5,7 @@ require_once __DIR__ . '/includes/auth.php';
 requireAdmin();
 require_once __DIR__ . '/../api/config/database.php';
 require_once __DIR__ . '/../api/config/pricing.php';
+require_once __DIR__ . '/../api/config/fcm.php';
 
 $admin=currentAdmin();
 if(!in_array((string)$admin['role'],['super_admin','finance_admin'],true)){
@@ -109,6 +110,33 @@ if(($_SERVER['REQUEST_METHOD']??'')==='POST'){
                 $log->execute(['local_admin',$admin['id'],'payment.status_changed','local_payment',$paymentId,json_encode(['status'=>$newStatus],JSON_UNESCAPED_UNICODE),$_SERVER['REMOTE_ADDR']??null,$_SERVER['HTTP_USER_AGENT']??null]);
 
                 $pdo->commit();
+                try{
+                    foreach([
+                        [
+                            (int)$payment['staff_user_id'],
+                            $title,
+                            $message
+                        ],
+                        [
+                            (int)$payment['contractor_user_id'],
+                            $contractorTitle,
+                            $contractorMessage
+                        ]
+                    ] as $pushNotice){
+                        $tokens=localFcmTokensForUsers($pdo,[$pushNotice[0]]);
+                        if($tokens){
+                            localFcmSendTokens(
+                                $pdo,
+                                $tokens,
+                                (string)$pushNotice[1],
+                                (string)$pushNotice[2],
+                                ['screen'=>'notifications','payment_id'=>$paymentId,'assignment_id'=>(int)$payment['assignment_id']]
+                            );
+                        }
+                    }
+                }catch(Throwable $pushError){
+                    error_log('MWH Local payment push: '.$pushError->getMessage());
+                }
                 $flash=$newStatus==='paid'?'Payment approved successfully.':'Payment rejected.';
             }elseif($action==='settings'){
                 $companyName=trim((string)($_POST['company_name']??''));
