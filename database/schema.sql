@@ -208,6 +208,7 @@ CREATE TABLE local_payments (
     payment_date DATE NOT NULL,
     payment_method VARCHAR(30) NOT NULL,
     transaction_reference VARCHAR(190) NULL,
+    payment_screenshot_path VARCHAR(500) NULL,
     status ENUM('pending','paid','failed') NOT NULL DEFAULT 'pending',
     notes VARCHAR(500) NULL,
     entered_by_admin_id BIGINT UNSIGNED NULL,
