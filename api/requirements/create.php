@@ -1,6 +1,7 @@
 <?php
 declare(strict_types=1);
 require_once __DIR__ . '/../auth/helpers.php';
+require_once __DIR__ . '/../config/fcm.php';
 
 if (($_SERVER['REQUEST_METHOD'] ?? '') !== 'POST') {
     localJson(['success' => false, 'message' => 'POST request required'], 405);
@@ -114,6 +115,53 @@ try {
 
     $id = (int)$pdo->lastInsertId();
 
+    $pushReport = [
+        'ok' => true,
+        'requested' => 0,
+        'sent' => 0,
+        'failed' => 0,
+        'message' => 'No push attempted.',
+    ];
+
+    try {
+        $staffRows = $pdo->query(
+            'SELECT id
+             FROM local_users
+             WHERE role="staff"
+               AND account_status="verified"
+               AND deleted_at IS NULL'
+        )->fetchAll(PDO::FETCH_COLUMN);
+        $staffUserIds = array_map('intval', $staffRows);
+
+        if ($staffUserIds) {
+            $pushMessage = 'New job available: ' . $roleName
+                . ' • ' . $location
+                . ' • ' . $shiftDate;
+
+            $pushReport = localNotifyUsers(
+                $pdo,
+                $staffUserIds,
+                'new_job',
+                'New local job available',
+                $pushMessage,
+                [
+                    'screen' => 'jobs',
+                    'requirement_id' => $id,
+                    'job_role_id' => $jobRoleId,
+                ]
+            )['push'];
+        }
+    } catch (Throwable $notificationError) {
+        error_log('MWH Local new-job notification: ' . $notificationError->getMessage());
+        $pushReport = [
+            'ok' => false,
+            'requested' => 0,
+            'sent' => 0,
+            'failed' => 0,
+            'message' => 'Job created, but push notification could not be processed.',
+        ];
+    }
+
     localJson([
         'success' => true,
         'message' => 'Requirement created successfully',
@@ -127,6 +175,7 @@ try {
             'amount_period' => $amountPeriod,
             'headcount' => $headcount,
             'total_payout' => $totalPayout,
+            'push_notification' => $pushReport,
         ],
     ], 201);
 } catch (InvalidArgumentException $e) {
