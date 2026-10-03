@@ -20,7 +20,10 @@ try {
     $email = strtolower(trim((string)($data['email'] ?? '')));
     $aadhaar = preg_replace('/\D+/', '', (string)($data['aadhaar_number'] ?? '')) ?? '';
 
-    if ($email !== '' && (!filter_var($email, FILTER_VALIDATE_EMAIL) || mb_strlen($email) > 190)) {
+    if ($email === '') {
+        throw new InvalidArgumentException('Email address is required');
+    }
+    if (!filter_var($email, FILTER_VALIDATE_EMAIL) || mb_strlen($email) > 190) {
         throw new InvalidArgumentException('Invalid email address');
     }
     if ($aadhaar !== '' && !preg_match('/^\d{12}$/', $aadhaar)) {
@@ -55,7 +58,7 @@ try {
     $stmt->execute([
         $name,
         $mobile,
-        $email !== '' ? $email : null,
+        $email,
         $aadhaar !== '' ? $aadhaar : null,
         $role,
         password_hash($password, PASSWORD_DEFAULT),
@@ -79,7 +82,7 @@ try {
             'user_id' => $userId,
             'name' => $name,
             'mobile' => $mobile,
-            'email' => $email !== '' ? $email : null,
+            'email' => $email,
             'role' => $role,
             'account_status' => 'pending_verification',
         ],
