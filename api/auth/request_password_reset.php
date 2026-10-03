@@ -34,7 +34,8 @@ try {
     }
 
     $stmt = $pdo->prepare(
-        'SELECT id,created_at
+        'SELECT id,
+                TIMESTAMPDIFF(SECOND, created_at, UTC_TIMESTAMP()) AS age_seconds
          FROM local_password_reset_otps
          WHERE user_id=? AND used_at IS NULL
          ORDER BY id DESC
@@ -43,16 +44,16 @@ try {
     $stmt->execute([(int)$user['id']]);
     $latest = $stmt->fetch(PDO::FETCH_ASSOC);
 
-    if ($latest && (time() - strtotime((string)$latest['created_at'])) < LOCAL_PASSWORD_RESET_RESEND_SECONDS) {
-        $remaining = max(
-            1,
-            LOCAL_PASSWORD_RESET_RESEND_SECONDS - (time() - strtotime((string)$latest['created_at']))
-        );
-        localJson([
-            'success' => false,
-            'code' => 'OTP_COOLDOWN',
-            'message' => "Please wait {$remaining} seconds before requesting another OTP",
-        ], 429);
+    if ($latest) {
+        $ageSeconds = max(0, (int)$latest['age_seconds']);
+        if ($ageSeconds < LOCAL_PASSWORD_RESET_RESEND_SECONDS) {
+            $remaining = LOCAL_PASSWORD_RESET_RESEND_SECONDS - $ageSeconds;
+            localJson([
+                'success' => false,
+                'code' => 'OTP_COOLDOWN',
+                'message' => "Please wait {$remaining} seconds before requesting another OTP",
+            ], 429);
+        }
     }
 
     $otp = str_pad((string)random_int(0, 999999), 6, '0', STR_PAD_LEFT);
