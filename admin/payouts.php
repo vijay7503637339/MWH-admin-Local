@@ -3,6 +3,7 @@ declare(strict_types=1);
 require_once __DIR__ . '/includes/auth.php';
 requireAdmin();
 require_once __DIR__ . '/../api/config/database.php';
+require_once __DIR__ . '/../api/config/fcm.php';
 $admin=currentAdmin();
 if(!in_array((string)$admin['role'],['super_admin','finance_admin'],true)){http_response_code(403);exit('Finance admin access required.');}
 if(empty($_SESSION['local_payout_csrf']))$_SESSION['local_payout_csrf']=bin2hex(random_bytes(32));
@@ -23,7 +24,22 @@ if(($_SERVER['REQUEST_METHOD']??'')==='POST'){
    $u->execute([$method,$ref!==''?$ref:null,$admin['id'],$id]);
    $n=$pdo->prepare('INSERT INTO local_notifications(user_id,admin_user_id,type,title,message,data_json) VALUES(?,?,?,?,?,?)');
    $n->execute([(int)$row['staff_user_id'],$admin['id'],'payout_paid','Payout paid','Your payout has been marked paid for "'.(string)$row['title'].'".',json_encode(['payout_id'=>$id],JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES)]);
-   $pdo->commit();$flash='Payout marked paid.';
+   $pdo->commit();
+   try{
+     $tokens=localFcmTokensForUsers($pdo,[(int)$row['staff_user_id']]);
+     if($tokens){
+       localFcmSendTokens(
+         $pdo,
+         $tokens,
+         'Payout paid',
+         'Your payout has been marked paid for "' . (string)$row['title'] . '".',
+         ['screen'=>'earnings','payout_id'=>$id]
+       );
+     }
+   }catch(Throwable $pushError){
+     error_log('MWH Local payout push: '.$pushError->getMessage());
+   }
+   $flash='Payout marked paid.';
   }catch(Throwable $ex){if($pdo->inTransaction())$pdo->rollBack();$error=$ex->getMessage();}
  }
 }
