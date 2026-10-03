@@ -14,7 +14,8 @@ try {
         'lr.status IN ("open","active")',
         'lr.deleted_at IS NULL',
         'lr.shift_date>=DATE(DATE_ADD(UTC_TIMESTAMP(), INTERVAL 330 MINUTE))',
-        '(SELECT COUNT(*) FROM local_applications sa WHERE sa.requirement_id=lr.id AND sa.status="selected") < lr.openings_count'
+        '(SELECT COUNT(*) FROM local_applications sa WHERE sa.requirement_id=lr.id AND sa.status="selected") < lr.openings_count',
+        'la.id IS NULL'
     ];
     $params=[];
     $term='%'.$q.'%';
